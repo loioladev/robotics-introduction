@@ -1,3 +1,8 @@
+#include <SoftwareSerial.h>
+
+// Define the pins for the SoftwareSerial connection
+SoftwareSerial espSerial(0, 1);  // RX, TX
+
 // Engine ports
 #define analogicEnableA 11
 #define analogicEnableB 10
@@ -51,8 +56,8 @@ void engine_left() {
 void setup() {
   // Serial configuration
   Serial.begin(115200);
-  while(!Serial) {}
-  Serial1.begin(115200);
+  espSerial.begin(115200); 
+  delay(100);
 
   // Engine configuration
   pinMode(analogicEnableA, OUTPUT);
@@ -69,10 +74,10 @@ void setup() {
 
 void loop() {
   // Check if data is available from ESP32 CAM
-  if (Serial1.available()) {
+  if (espSerial.available()) {
     // Read incoming data from ESP32 CAM
-    while (Serial1.available()) {
-      char incomingByte = Serial1.read();
+    while (espSerial.available()) {
+      char incomingByte = espSerial.read();
       Serial.print(incomingByte);  // Print data to Serial Monitor
     }
   }
