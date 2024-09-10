@@ -1,5 +1,6 @@
 #include <WiFi.h>
 #include <WebServer.h>
+#include "Base64.h"
 #include "esp_camera.h"
 
 // Camera configuration
@@ -26,8 +27,8 @@
 #define LED_GPIO_NUM   4
 
 // Webserver configuration
-const char* ssid = "******************";
-const char* password = "******************";
+const char* ssid = "Bezerra";
+const char* password = "juliaamordaminhavida";
 WebServer server(80);
 
 void startCamera() {
@@ -52,7 +53,7 @@ void startCamera() {
   config.pin_reset = RESET_GPIO_NUM;
   config.pin_xclk = XCLK_GPIO_NUM;
   config.xclk_freq_hz = 20000000;
-  config.pixel_format = PIXFORMAT_JPEG;
+  config.pixel_format = PIXFORMAT_RGB565;
 
   if (psramFound()) {
     config.frame_size = FRAMESIZE_UXGA; // 1600x1200
@@ -81,25 +82,31 @@ void getIndex() {
   server.send(200, "text/html", page);
 }
 
+
 void captureImage() {
-  /* Create route to capture image */
   camera_fb_t *fb = NULL;
 
-  // Capture the image from the ESP32 CAM
+  // Capturar a imagem da ESP32 CAM
   fb = esp_camera_fb_get(); 
   if (!fb) {
     server.send(500, "text/plain", "Image capture failed");
     return;
   }
 
-  // Send the captured image as HTTP response
-  server.sendHeader("Content-Type", "image/jpeg");
-  server.sendHeader("Content-Length", String(fb->len));
-  server.send(200, "image/jpeg", (const char*)fb->buf);
+  // Enviar os cabeçalhos da resposta
+  server.sendHeader("Content-Type", "application/octet-stream");
+  server.sendHeader("Content-Disposition", "attachment; filename=capture.jpg");
+  server.setContentLength(fb->len);
 
-  // Return the frame buffer back to the driver for reuse
+  // Enviar o código HTTP 200 (OK) sem corpo
+  server.send(200);
+
+  // Enviar o conteúdo em partes
+  WiFiClient client = server.client();
+  client.write(fb->buf, fb->len);
+
+  // Retornar o frame buffer de volta para o driver
   esp_camera_fb_return(fb);
-  return;
 }
 
 void receiveMessage() {
